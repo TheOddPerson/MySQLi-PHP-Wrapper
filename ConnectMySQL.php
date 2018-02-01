@@ -1,18 +1,9 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(~0);
-/**What to do in City X
   *Author: Nick Bolhuis
   *File: ConnectMySQL.php
-  *Version: 8
+  *Version: 8.0.1
 **/
-//date_default_timezone_set('America/Toronto');
 //This File Requires that Smarty DIR has already been defined and Smarty Class has already been required.
-//this has already been done by 'BaseResources.php'
-
-#$enable_logging = false;
-#global $enable_logging;
-
 $db = "";
 
 function MySQLi_Begin () {
@@ -26,8 +17,7 @@ function MySQLi_Begin () {
 		if($db->connect_errno > 0){
 			die('Unable to connect to database [' . $db->connect_error . ']');		
 		}
-	} else {
-		#print_r ($db);
+	} else {		
 		MySQLi_ping($db);
 	}
 	
@@ -46,11 +36,20 @@ function MySQLi_Sanitize($string) {
 		return mysqli_real_escape_string($db,$string);
 	}
 }
+
+/*function HasPermission ($PermissionName) {
+	return true;
+}*/
+
+
 function NoAccess() {
+		//Handle your user permission error here
+		/*
 		global $smarty;
 		$smarty->assign('Redirect','index.php');
 		$smarty->assign('Message','Your account does not have access to perform this action.<br>If you think you are seeing this message in error please consult the administrator.<br>Error:No DB Access');
-		$smarty->display('Confirmation.tpl');		
+		$smarty->display('Confirmation.tpl');
+		*/
 }
 
 function MySQLi_Select ($table, $columns, $orderby = '', $direction = 'ASC', $skip = 0, $limit = 'a') {     
@@ -85,43 +84,7 @@ function MySQLi_Select ($table, $columns, $orderby = '', $direction = 'ASC', $sk
 	return $Output;
 	$Output->free();	
 }
-/* Disabling this until further notice 06-13-2017
-function MySQLi_SelectNum ($table, $columns) {  //For use with smarty populated dropdown options (they don't work with assoc arrays)
-    //Make sure when defining columns you enter the Primary Key 
-    //or ID column as the first column
-	MySQLi_Begin();
-	global $db;
-	$sql = 	'SELECT ';
-	foreach ($columns as $column) {
-		$sql .= '`'.$column.'`,';
-	}
-	$sql = chop($sql, ',');
-	$sql .= ' FROM `'.$table.'`';
-	$Output = new stdClass();	
-	if(!$result = $db->query($sql)){
-		die('There was an error running the query [' . $db->error . ']');
-	}
-	else {
-    	//If there is more than 1 column
-    	if (count($columns) > 1) { 
-			while($row = $result->fetch_assoc()){
-				foreach ($columns as $column) {					
-						$Output->$row[$columns[0]] = $row[$column];						
-				}
-			}
-		}
-		else { //if there is just 1 column
-		  	  $row = $result->fetch_assoc();
-			  $Output = $row[$columns];
-		    }   
-	    }
-	    if (!isset($Output)) { //if no results
-			$Output = array();
-		}
-	#$db->close();
-	return $Output;
-	$Output->free();	
-}*/
+
 function MySQLi_SelectWhere ($table, $columns, $where, $orderby = '0', $direction = 'ASC', $skip = 0, $limit = 'a') { //
     /*Make sure when defining columns you enter the Primary Key 
     or ID column as the first column*/
@@ -207,8 +170,7 @@ function MySQLi_Search  ($table, $columns, $columnstocompare, $string, $searchty
 	if (is_integer($limit)) {
 			$sql .= ' LIMIT ' . $skip . ', '. $limit;
 	}	
-    //echo $sql . ';<br>';
-	if(!$result = $db->query($sql)){
+    if(!$result = $db->query($sql)){
 		die('There was an error running the query [' . $db->error . ']');
 	}
 	else {
@@ -254,8 +216,7 @@ function MySQLi_Insert ($table, $columns, $values) {
 		$sql .= "'".$value."',";
 	}	
 	$sql = chop($sql,',');
-	$sql .=')';
-	#print $sql;
+	$sql .=')';	
 	$result = $db->query($sql);
     $InsertedID = $db->insert_id;
 	$User = $_SESSION['UserID'];
@@ -272,8 +233,6 @@ function MySQLi_Update ($table, $columns, $values, $ID, $primaryKey = 'ID') {
 
 	$User = $_SESSION['UserID'];
 	//Make the SQL query statement	
-	#$columns[] = 'Modified_By';
-	#$values[] = $User;
 	$sql = 'UPDATE `'.$table.'` SET ';	
 	foreach ($columns as $index=>$column) {		
 		$sql .= $column."='".mysqli_real_escape_string($db,$values[$index])."',";
@@ -311,21 +270,15 @@ function MySQLi_Delete ($table, $where, $Name) {
 		MySQLi_UpdateLog ($db, $table, 'Delete', $sql, $User, $where, $Name);
 	#$db->close();
 }
-#note: this function returns a numerical array, rather than associative/dictionary.
-#was most likely a special use scenario - leaving as is for now.
+
 function MySQLi_Compare ($table1, $columns, $table2, $compare1, $compare2, $where, $orderby = 'ID', $direction = 'ASC', $skip = 0, $limit = 'a') {
 	MySQLi_Begin();
 	global $db;
 	$sql = 	'SELECT ';
-	if (count($columns)>1) {	
-	  foreach ($columns as $column) {
-		  $sql .= '`'.$column.'`,';
-	  }
-	  $sql = chop($sql, ',');
+	foreach ($columns as $column) {
+	  $sql .= '`'.$column.'`,';
 	}
-	else {
-	  $sql .= $columns;
-	}
+	$sql = chop($sql, ',');
 	$sql .= ' FROM `'.$table1.'`';
     $sql .= ' WHERE '.$table1.".".$compare1;
     $sql .= ' NOT IN ';
@@ -351,17 +304,5 @@ function MySQLi_Compare ($table1, $columns, $table2, $compare1, $compare2, $wher
 	}
 	$Output->free();	
 }
-function MySQLi_UpdateLog ($db, $TableModified, $Action, $SQLRan, $User, $RowID, $Name) { 
-	//($db = db connection to reuse, $TableModified, $Action = insert update or delete? , $SQLRan = actual sql submitted, $User = UserID who did it. $RowID, $Name = Descriptor for updated data (for in the event it's deleted))
-	//This log should be exhaustive for all SQL executions that modify SQL tables on the server
-	//Recommended not to rely on this log but have some form of user accessible log / history
-	global $enable_logging;
-	if ($enable_logging) {
-		$SQLRan = mysqli_real_escape_string($db,$SQLRan);
-		//$SQLRan = addcslashes($SQLRan, "`'");
-		$sql = "INSERT INTO `Log` (`TableName`,`Action`,`SQLRan`,`UserID`,`RowID`,`Name`) VALUES ('".$TableModified."','".$Action."','".$SQLRan."','".$User."','".$RowID."','".$Name."')";
-		//run the query
-		$result = $db->query($sql);
-	}
-}
+
 ?>
