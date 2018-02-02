@@ -1,8 +1,10 @@
 <?php
+/**
   *Author: Nick Bolhuis
   *File: ConnectMySQL.php
   *Version: 8.0.1
 **/
+
 //This File Requires that Smarty DIR has already been defined and Smarty Class has already been required.
 $db = "";
 
