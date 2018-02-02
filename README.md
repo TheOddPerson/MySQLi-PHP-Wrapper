@@ -1,9 +1,10 @@
 # MySQLi-PHP-Wrapper
 A PHP wrapper for MySQLi to be able to perform most MySQL queries in a single line of PHP code<br>
 
-This wrapper is preconfigured to use Smarty variables <br>
+This wrapper is pre-configured to use Smarty variables <br>
+This configuration is optional and may be replaced by other constants<br>
 more information on Smarty here: https://www.smarty.net/<br>
-
+<br>
 Permission control has been implemented for Insert / Update / Delete Commands<br>
 function HasPermission ($PermissionName) as boolean should be somewhere in your code <br>
 where $PermissionName = CanAdd | CanAlter | CanDelete<br>
@@ -17,7 +18,7 @@ MySQLPass = MySQL Password<br>
 MySQLDB = MySQL Database Name<br>
 <br>
 
-### All user input should be sanatised via MySQLi_Sanitize($string)
+### All user input should be sanitized via MySQLi_Sanitize($string)
 
 ## Reference and Syntax
 
@@ -26,7 +27,7 @@ MySQLDB = MySQL Database Name<br>
   $table = table name as string <br>
   $columns = column names to return as array of strings<br>
   $orderby = column name as string<br>
-  $directoin = 'ASC' or 'DESC'<br>
+  $direction = 'ASC' or 'DESC'<br>
   $skip = MySQL skip as integer<br>
   $limit = MySQL limit as integer (default value of 'a' omits the option)<br>
 <br>
